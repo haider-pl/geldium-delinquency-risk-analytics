@@ -1,0 +1,22 @@
+name: Notebook syntax check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install nbformat
+      - name: Check notebook code syntax
+        run: |
+          python - <<'PYCODE'
+          import ast, glob, nbformat
+          for p in glob.glob('notebooks/*.ipynb'):
+              nb = nbformat.read(p, as_version=4)
+              for i, cell in enumerate(nb.cells):
+                  if cell.cell_type == 'code' and cell.source.strip():
+                      ast.parse(cell.source, filename=f'{p}:cell{i}')
+              print('OK', p)
+          PYCODE
